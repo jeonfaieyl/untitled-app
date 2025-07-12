@@ -34,10 +34,30 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [loginError, setLoginError] = useState<string>(''); // For web-compatible error display
 
   // Hardcoded credentials
   const VALID_USERNAME = 'admin';
   const VALID_PASSWORD = 'admin';
+
+  // Cross-platform alert function
+  const showAlert = (title: string, message: string, onPress?: () => void) => {
+    if (Platform.OS === 'web') {
+      // For web, use browser's native alert or custom message
+      const userConfirmed = window.confirm(`${title}: ${message}`);
+      if (userConfirmed && onPress) {
+        onPress();
+      }
+    } else {
+      // For mobile, use React Native Alert
+      Alert.alert(title, message, [
+        {
+          text: 'OK',
+          onPress: onPress
+        }
+      ]);
+    }
+  };
 
   // Form validation
   const validateForm = (): boolean => {
@@ -54,7 +74,7 @@ export default function LoginScreen() {
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 3) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Password must be at least 3 characters';
     }
 
     setErrors(newErrors);
@@ -74,6 +94,11 @@ export default function LoginScreen() {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
+    
+    // Clear login error when user starts typing
+    if (loginError) {
+      setLoginError('');
+    }
   };
 
   // Handle form submission
@@ -83,6 +108,7 @@ export default function LoginScreen() {
     }
 
     setIsLoading(true);
+    setLoginError(''); // Clear any previous error
     
     try {
       // Simulate API call delay
@@ -90,14 +116,34 @@ export default function LoginScreen() {
       
       // Check credentials
       if (checkCredentials(formData.username, formData.password)) {
-        // Navigate to business_unit screen
-        router.push('/business_unit');
+        // Success - show alert and navigate
+        showAlert(
+          'Success',
+          'Login successful!',
+          () => router.push('/business_unit')
+        );
       } else {
-        Alert.alert('Error', 'Invalid username or password. Please try again.');
+        // Show error message (web-compatible)
+        if (Platform.OS === 'web') {
+          setLoginError('Invalid username or password. Please check your credentials and try again.');
+        } else {
+          showAlert(
+            'Login Failed',
+            'Invalid username or password. Please check your credentials and try again.'
+          );
+        }
       }
       
     } catch (error) {
-      Alert.alert('Error', 'Login failed. Please try again.');
+      // Handle network or other errors
+      if (Platform.OS === 'web') {
+        setLoginError('Login failed due to a network error. Please check your connection and try again.');
+      } else {
+        showAlert(
+          'Error',
+          'Login failed due to a network error. Please check your connection and try again.'
+        );
+      }
     } finally {
       setIsLoading(false);
     }
@@ -106,6 +152,14 @@ export default function LoginScreen() {
   // Toggle password visibility
   const togglePasswordVisibility = (): void => {
     setShowPassword(!showPassword);
+  };
+
+  // Handle forgot password
+  const handleForgotPassword = (): void => {
+    showAlert(
+      'Forgot Password',
+      'Please contact your administrator to reset your password.'
+    );
   };
 
   return (
@@ -123,6 +177,14 @@ export default function LoginScreen() {
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to your account</Text>
           </View>
+
+          {/* Login Error Message for Web */}
+          {loginError && Platform.OS === 'web' && (
+            <View style={styles.alertContainer}>
+              <Ionicons name="warning" size={20} color="#ff4444" />
+              <Text style={styles.alertText}>{loginError}</Text>
+            </View>
+          )}
 
           {/* Username Input */}
           <View style={styles.inputContainer}>
@@ -211,7 +273,10 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           {/* Forgot Password Link */}
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity 
+            style={styles.forgotPassword}
+            onPress={handleForgotPassword}
+          >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
@@ -227,15 +292,15 @@ export default function LoginScreen() {
             <Text style={styles.navigationText}>
               Don't have an account?{' '}
             </Text>
-            {/* <Link href="/signup" style={styles.navigationLink}>
-              Sign Up
-            </Link> */}
+            <TouchableOpacity onPress={() => showAlert('Info', 'Sign up feature coming soon!')}>
+              <Text style={styles.navigationLink}>Sign Up</Text>
+            </TouchableOpacity>
           </View>
 
           {/* About Link */}
-          {/* <Link href="/about" style={styles.aboutLink}>
-            About
-          </Link> */}
+          <TouchableOpacity onPress={() => showAlert('About', 'Business Unit Management System v1.0')}>
+            <Text style={styles.aboutLink}>About</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -279,6 +344,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+  },
+  alertContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff5f5',
+    borderColor: '#ff4444',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  alertText: {
+    color: '#ff4444',
+    fontSize: 14,
+    marginLeft: 8,
+    flex: 1,
   },
   inputContainer: {
     marginBottom: 20,
