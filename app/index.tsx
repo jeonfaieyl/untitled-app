@@ -1,5 +1,6 @@
+// Gathering the tools we need to make a program
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -42,10 +43,10 @@ export default function LoginScreen() {
 
   // Cross-platform alert function
   const showAlert = (title: string, message: string, onPress?: () => void) => {
-    if (Platform.OS === 'web') {
-      // For web, use browser's native alert or custom message
+    if(Platform.OS === 'web') {
+      //For web, use browser's native alert or custom message
       const userConfirmed = window.confirm(`${title}: ${message}`);
-      if (userConfirmed && onPress) {
+      if(userConfirmed && onPress) {
         onPress();
       }
     } else {
@@ -94,7 +95,7 @@ export default function LoginScreen() {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
-    
+
     // Clear login error when user starts typing
     if (loginError) {
       setLoginError('');
@@ -116,15 +117,11 @@ export default function LoginScreen() {
       
       // Check credentials
       if (checkCredentials(formData.username, formData.password)) {
-        // Success - show alert and navigate
-        showAlert(
-          'Success',
-          'Login successful!',
-          () => router.push('/business_unit')
-        );
+        // Success - navigate directly using router
+        router.push('/code_desc');
       } else {
         // Show error message (web-compatible)
-        if (Platform.OS === 'web') {
+        if(Platform.OS === 'web') {
           setLoginError('Invalid username or password. Please check your credentials and try again.');
         } else {
           showAlert(
@@ -133,10 +130,9 @@ export default function LoginScreen() {
           );
         }
       }
-      
     } catch (error) {
       // Handle network or other errors
-      if (Platform.OS === 'web') {
+      if(Platform.OS === 'web') {
         setLoginError('Login failed due to a network error. Please check your connection and try again.');
       } else {
         showAlert(
@@ -154,14 +150,6 @@ export default function LoginScreen() {
     setShowPassword(!showPassword);
   };
 
-  // Handle forgot password
-  const handleForgotPassword = (): void => {
-    showAlert(
-      'Forgot Password',
-      'Please contact your administrator to reset your password.'
-    );
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -174,7 +162,7 @@ export default function LoginScreen() {
         <View style={styles.formContainer}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Welcome Back</Text>
+            <Text style={styles.title}>Welcome!</Text>
             <Text style={styles.subtitle}>Sign in to your account</Text>
           </View>
 
@@ -273,12 +261,9 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           {/* Forgot Password Link */}
-          <TouchableOpacity 
-            style={styles.forgotPassword}
-            onPress={handleForgotPassword}
-          >
+          {/* <TouchableOpacity style={styles.forgotPassword}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Divider */}
           <View style={styles.divider}>
@@ -288,19 +273,19 @@ export default function LoginScreen() {
           </View>
 
           {/* Navigation Link */}
-          <View style={styles.navigationContainer}>
+          {/* <View style={styles.navigationContainer}>
             <Text style={styles.navigationText}>
               Don't have an account?{' '}
             </Text>
-            <TouchableOpacity onPress={() => showAlert('Info', 'Sign up feature coming soon!')}>
-              <Text style={styles.navigationLink}>Sign Up</Text>
-            </TouchableOpacity>
-          </View>
+            <Link href="/signup" style={styles.navigationLink}>
+              Sign Up
+            </Link>
+          </View> */}
 
           {/* About Link */}
-          <TouchableOpacity onPress={() => showAlert('About', 'Business Unit Management System v1.0')}>
-            <Text style={styles.aboutLink}>About</Text>
-          </TouchableOpacity>
+          <Link href="/about" style={styles.aboutLink}>
+            About
+          </Link>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -315,7 +300,17 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    ...Platform.select({
+      ios: {
+        padding: 20,
+      },
+      android: {
+        padding: 20,
+      },
+      default: {
+        padding: 300,
+      },
+    }),
   },
   formContainer: {
     backgroundColor: '#fff',
@@ -346,9 +341,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   alertContainer: {
-    flexDirection: 'row',
+    flexDirection:'row',
     alignItems: 'center',
-    backgroundColor: '#fff5f5',
+    backgroundColor: '#fff5f5ff',
     borderColor: '#ff4444',
     borderWidth: 1,
     borderRadius: 8,
